@@ -1,9 +1,9 @@
-﻿using System.Drawing;
-
-namespace DotNetParser
+﻿namespace DotNetParser
 {
     public static class ExchangeFixMessageGenerator
     {
+        private static string _startOfHeading = "\x01";
+
         public static string BuildExecutionReportNew(
             string clOrdId,
             string execId,

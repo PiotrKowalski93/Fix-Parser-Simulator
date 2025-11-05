@@ -17,13 +17,13 @@
 
         public static string PrepareFinalMsg(List<string> bodyFields)
         {
-            string body = string.Join('\x01', bodyFields) + '\x01';
-            string header = $"8=FIX.4.4\x019={body.Length}";
+            string body = string.Join('|', bodyFields) + '|';
+            string header = $"8=FIX.4.4|9={body.Length}";
             string fullMessage = header + body;
 
             int chcekSum = CalculateChecksum(fullMessage);
 
-            return fullMessage + $"10={chcekSum:D3}\x01";
+            return fullMessage + $"10={chcekSum:D3}|";
         }
     }
 }
