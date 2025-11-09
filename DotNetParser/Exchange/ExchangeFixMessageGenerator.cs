@@ -1,4 +1,4 @@
-﻿namespace DotNetParser
+﻿namespace DotNetParser.Exchange
 {
     public static class ExchangeFixMessageGenerator
     {
@@ -8,7 +8,7 @@
             string clOrdId,
             string execId,
             string symbol,
-            Sides side,
+            string side,
             decimal orderQty,
             decimal price,
             string seqNumber,
@@ -49,9 +49,9 @@
             string clOrdId,
             string execId,
             string symbol,
-            Sides side,
+            string side,
             decimal orderQty,
-            decimal lastPx,
+            decimal price,
             string seqNumber,
             string senderCompID = "EXCHANGE",
             string targetCompID = "CLIENT")
@@ -73,9 +73,9 @@
                 $"54={side}",
                 $"38={orderQty}",
                 $"32={orderQty}",          // LastShares = full fill
-                $"31={lastPx}",            // LastPx
+                $"31={price}",            // LastPx
                 $"14={orderQty}",          // CumQty = fully filled
-                $"6={lastPx}",             // AvgPx
+                $"6={price}",             // AvgPx
                 "151=0",                   // LeavesQty = 0
                 $"60={sendingTime}",
             };
@@ -83,10 +83,11 @@
             return Utils.PrepareFinalMsg(bodyFields);
         }
 
-        public static string BuildExecutionReportPartialFill(string clOrdId,
+        public static string BuildExecutionReportPartialFill(
+            string clOrdId,
             string execId,
             string symbol,
-            Sides side,
+            string side,
             decimal orderQty,
             decimal filledQty,
             decimal fillPrice,
@@ -130,8 +131,8 @@
             string execId,
             string origClOrdId,
             string symbol,
-            Sides side,
-            decimal orderQty,
+            string side,
+            decimal orderQty, 
             string seqNumber,
             string senderCompID = "EXCHANGE",
             string targetCompID = "CLIENT")
@@ -164,7 +165,7 @@
             string clOrdId,
             string execId,
             string symbol,
-            Sides side,
+            string side,
             decimal orderQty,
             string reason,
             string seqNumber,
