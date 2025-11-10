@@ -2,8 +2,6 @@
 {
     public static class ExchangeFixMessageGenerator
     {
-        private static string _startOfHeading = "\x01";
-
         public static string BuildExecutionReportNew(
             string clOrdId,
             string execId,
@@ -13,7 +11,7 @@
             decimal price,
             string seqNumber,
             string senderCompID = "EXCHANGE",
-            string targetCompID = "CLIENT")
+            string targetCompID = "BROKER")
         {
             string sendingTime = Utils.GetFormatedDate();
             var bodyFields = new List<string>()
@@ -54,7 +52,7 @@
             decimal price,
             string seqNumber,
             string senderCompID = "EXCHANGE",
-            string targetCompID = "CLIENT")
+            string targetCompID = "BROKER")
         {
             string sendingTime = Utils.GetFormatedDate();
             var bodyFields = new List<string>()
@@ -93,7 +91,7 @@
             decimal fillPrice,
             string seqNumber,
             string senderCompID = "EXCHANGE",
-            string targetCompID = "CLIENT")
+            string targetCompID = "BROKER")
         {
             string sendingTime = Utils.GetFormatedDate();
 
@@ -135,7 +133,7 @@
             decimal orderQty, 
             string seqNumber,
             string senderCompID = "EXCHANGE",
-            string targetCompID = "CLIENT")
+            string targetCompID = "BROKER")
         {
             string sendingTime = Utils.GetFormatedDate();
             var bodyFields = new List<string>()
@@ -170,7 +168,7 @@
             string reason,
             string seqNumber,
             string senderCompID = "EXCHANGE",
-            string targetCompID = "CLIENT")
+            string targetCompID = "BROKER")
         {
             string sendingTime = Utils.GetFormatedDate();
             var bodyFields = new List<string>()

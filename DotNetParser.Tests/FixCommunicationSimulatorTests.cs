@@ -4,12 +4,12 @@ namespace FixSimulator.Tests
 {
     internal class FixCommunicationSimulatorTests
     {
-        private FixCommunicationSimulator _simulator;
+        private ExchangeServer _simulator;
 
         [SetUp]
         public void Setup()
         {
-            _simulator = new FixCommunicationSimulator();
+            _simulator = new ExchangeServer();
         }
 
         [Test]

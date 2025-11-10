@@ -1,4 +1,6 @@
-﻿namespace DotNetParser.Broker
+﻿using System.Drawing;
+
+namespace DotNetParser.Broker
 {
     //| FIX tag 35 | Name                                    
     //| ---------- | ---------------------------------------
@@ -16,53 +18,190 @@
     public class BrokerFixMessageGenerator : IBrokerMessages
     {
         private static int msgSeqNum = 1;
+        private string _senderCompID;
+        private string _targetCompID;
+
+        public BrokerFixMessageGenerator(string senderCompID = "BROKER", string targetCompID = "EXCHANGE")
+        {
+            _senderCompID = senderCompID;
+            _targetCompID = targetCompID;
+        }
 
         #region Session Layer
         public string GenerateLogonMsg()
         {
-            throw new NotImplementedException();
+            var body = new List<string>()
+            {
+                "35=A",                                         // Logon
+                $"49={_senderCompID}",
+                $"56={_targetCompID}",
+                $"34={msgSeqNum++}",
+                $"52={DateTime.UtcNow:yyyyMMdd-HH:mm:ss.fff}",
+                "98=0",                                         // Encryption (none)
+                "108=30"                                        // Heartbeat in seconds
+            };
+            return Utils.PrepareFinalMsg(body);
         }
 
         public string GenerateLogoffMsg()
         {
-            throw new NotImplementedException();
+            var body = new List<string>()
+            {
+                "35=5",                                         // Logout
+                $"49={_senderCompID}",
+                $"56={_targetCompID}",
+                $"34={msgSeqNum++}",
+                $"52={DateTime.UtcNow:yyyyMMdd-HH:mm:ss.fff}"
+            };
+            return Utils.PrepareFinalMsg(body);
         }
 
-        public string GenerateTestRequest()
+        public string GenerateTestRequest(string testRequestId)
         {
-            throw new NotImplementedException();
+            var body = new List<string>()
+            {
+                "35=1",                                         // TestRequest
+                $"49={_senderCompID}",
+                $"56={_targetCompID}",
+                $"34={msgSeqNum++}",
+                $"52={DateTime.UtcNow:yyyyMMdd-HH:mm:ss.fff}",
+                $"112={testRequestId}"                          // TestReqID
+            };
+
+            return Utils.PrepareFinalMsg(body);
         }
 
         public string GenerateHeartbeat()
         {
-            throw new NotImplementedException();
+            var body = new List<string>()
+            {
+                "35=0",                                         // Heartbeat
+                $"49={_senderCompID}",
+                $"56={_targetCompID}",
+                $"34={msgSeqNum++}",
+                $"52={DateTime.UtcNow:yyyyMMdd-HH:mm:ss.fff}"
+            };
+
+            return Utils.PrepareFinalMsg(body);
         }
         #endregion
 
         #region Application Layer
-        public string GenerateNewOrderSingle(string clOrdId, string symbol, Sides side, int qty, float price, string orderId, string execId, string client)
+        public string GenerateNewOrderSingle(
+            string clOrdId, 
+            string symbol, 
+            string side, 
+            int qty, 
+            float price, 
+            string execId, 
+            string exDestination)
         {
-            throw new NotImplementedException();
+            var body = new List<string>()
+            {
+                "35=D",                                         // NewOrderSingle
+                $"49={_senderCompID}",
+                $"56={_targetCompID}",
+                $"34={msgSeqNum++}",
+                $"52={DateTime.UtcNow:yyyyMMdd-HH:mm:ss.fff}",
+                $"11={clOrdId}",                                // Client Order ID
+                $"55={symbol}",                                 // Symbol
+                $"54={side}",                                   // Side
+                $"38={qty}",                                    // Quantity
+                $"40=2",                                        // OrdType = Limit
+                $"44={price}",                                  // Price
+                "59=0",                                         // TimeInForce = Day
+                $"100={exDestination}",                                // ExDestination or custom client tag
+                $"60={DateTime.UtcNow:yyyyMMdd-HH:mm:ss}"       // TransactTime                          
+            };
+
+            return Utils.PrepareFinalMsg(body);
         }
 
-        public string GenerateOrderCancelRequest()
+        public string GenerateOrderCancelRequest(
+            string clOrdId,
+            string orderNumber,
+            string symbol,
+            string side)
         {
-            throw new NotImplementedException();
+            var body = new List<string>()
+            {
+                "35=F",                                         // OrderCancelRequest
+                $"49={_senderCompID}",
+                $"56={_targetCompID}",
+                $"34={msgSeqNum++}",
+                $"52={DateTime.UtcNow:yyyyMMdd-HH:mm:ss.fff}",
+                $"11={clOrdId}",                                // OrigClOrdID
+                $"41={orderNumber}",                            // Target Order to cancel
+                $"54={side}",                                   // Side=Buy
+                $"55={symbol}",                                 // Symbol
+                $"60={DateTime.UtcNow:yyyyMMdd-HH:mm:ss}"
+            };
+
+            return Utils.PrepareFinalMsg(body);
         }
 
-        public string GenerateMarketDataSnapshot()
+        public string GenerateMarketDataSnapshot(
+            string msgRequestId,
+            string symbol)
         {
-            throw new NotImplementedException();
+            var body = new List<string>()
+            {
+                "35=V",                                         // MarketDataRequest
+                $"49={_senderCompID}",
+                $"56={_targetCompID}",
+                $"34={msgSeqNum++}",
+                $"52={DateTime.UtcNow:yyyyMMdd-HH:mm:ss.fff}",
+                $"262={msgRequestId}",                          // MDReqID
+                "263=1",                                        // SubscriptionRequestType = 1 (snapshot + updates)
+                "264=1",                                        // MarketDepth = 1
+                "146=1",                                        // NoRelatedSym
+                $"55={symbol}"                                  // Symbol
+            };
+
+            return Utils.PrepareFinalMsg(body);
         }
 
         public string GenerateResendRequest(int beginSeqNo, int endSeqNo)
         {
-            throw new NotImplementedException();
+            var body = new List<string>()
+            {
+                "35=2",                                         // Resend Request
+                $"49={_senderCompID}",
+                $"56={_targetCompID}",
+                $"34={msgSeqNum++}",
+                $"52={DateTime.UtcNow:yyyyMMdd-HH:mm:ss.fff}",
+                $"7={beginSeqNo}",                              // BeginSeqNo
+                $"16={endSeqNo}"                                // EndSeqNo
+            };
+
+            return Utils.PrepareFinalMsg(body);
         }
 
-        public string GenerateOrderReplaceRequest()
+        public string GenerateOrderReplaceRequest(
+            string originalClOrdId,
+            string newClOrdId,
+            string symbol,
+            string side,
+            string newQty,
+            string newPrice)
         {
-            throw new NotImplementedException();
+            var body = new List<string>()
+            {
+                "35=G",                                         // OrderCancelReplaceRequest
+                $"49={_senderCompID}",
+                $"56={_targetCompID}",
+                $"34={msgSeqNum++}",
+                $"52={DateTime.UtcNow:yyyyMMdd-HH:mm:ss.fff}",
+                $"41={originalClOrdId}",                        // OrigClOrdID (previous order)
+                $"11={newClOrdId}",                             // New ClOrdID (new replacement)
+                $"55={symbol}",                                 // Symbol
+                $"54={side}",                                   // Side=Buy
+                $"38={newQty}",                                 // New quantity
+                $"44={newPrice}",                               // New price
+                $"60={DateTime.UtcNow:yyyyMMdd-HH:mm:ss}"       // EndSeqNo
+            };
+
+            return Utils.PrepareFinalMsg(body);
         }
         #endregion
     }

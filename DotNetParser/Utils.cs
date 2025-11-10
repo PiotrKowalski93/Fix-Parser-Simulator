@@ -15,6 +15,7 @@
             return DateTime.UtcNow.ToString("yyyyMMdd-HH:mm:ss.fff");
         }
 
+        //TODO: Add tests
         public static string PrepareFinalMsg(List<string> bodyFields)
         {
             string body = string.Join('|', bodyFields) + '|';

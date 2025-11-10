@@ -1,12 +1,20 @@
 ﻿using DotNetParser.Exchange;
+using FixSimulator.Broker;
 
 namespace DotNetParser
 {
     internal class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
-            
+            var exchange = new ExchangeServer();
+            _ = exchange.StartAsync();
+
+            await Task.Delay(1000);
+
+            var broker = new BrokerClient();
+            await broker.StartAsync();
+
             Console.ReadKey();
         }
 
