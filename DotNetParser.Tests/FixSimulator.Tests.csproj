@@ -17,7 +17,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DotNetParser\FixSimulator.csproj" />
+    <ProjectReference Include="..\DotNetParser\Broker.csproj" />
+    <ProjectReference Include="..\ExchangeServer\Exchange.csproj" />
+    <ProjectReference Include="..\Utils\Utils.csproj" />
   </ItemGroup>
 
   <ItemGroup>

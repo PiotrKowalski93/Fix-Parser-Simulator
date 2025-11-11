@@ -2,7 +2,7 @@
 using System.Net.Sockets;
 using System.Text;
 
-namespace DotNetParser.Exchange
+namespace Exchange
 {
     public class ExchangeServer
     {
@@ -11,53 +11,79 @@ namespace DotNetParser.Exchange
         private TcpListener? _listener;
         private Random _randomizer;
 
-        public ExchangeServer(int port = 98781)
+        public ExchangeServer(int port = 9000)
         {
             _port = port;
             _randomizer = new Random();
         }
 
-        public async Task StartAsync(CancellationToken cancellationToken = default)
+        public async Task StartAsync(CancellationToken cancellationToken)
         {
-            _listener = new TcpListener(IPAddress.Loopback, _port);
+            IPAddress localAddr = IPAddress.Parse("127.0.0.1");
+            _listener = new TcpListener(localAddr, _port);
             _listener.Start();
             _running = true;
 
-            Console.WriteLine($"FIX Exchange Simulator started on port: {_port}");
+            Console.WriteLine($"[Exchange] Listening on port: {_port}");
 
-            while (cancellationToken.IsCancellationRequested) 
+            while (!cancellationToken.IsCancellationRequested)
             {
-                var client = await _listener.AcceptTcpClientAsync();
+                using TcpClient client = await _listener.AcceptTcpClientAsync();
                 await HandleClientAsync(client, cancellationToken);
             }
         }
 
+        //TODO: Implement Session handling
         private async Task HandleClientAsync(TcpClient client, CancellationToken cancellationToken)
         {
-            Console.WriteLine("Client connected.");
+            Console.WriteLine("[Exchange] Client connected.");
 
             using var stream = client.GetStream();
             var buffer = new byte[4096];
+            int offset = 0;
+
+            var sb = new StringBuilder(); // bufor na części wiadomości FIX
 
             while (_running && !cancellationToken.IsCancellationRequested)
             {
-                int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, cancellationToken);
-                if (bytesRead <= 0) break;
+                int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
+                if (bytesRead <= 0) break; // Connection Closed
 
-                string fixMsg = Encoding.ASCII.GetString(buffer, 0, bytesRead);
-                fixMsg = fixMsg.Replace('\x01', '|'); // Only for console logging!
+                sb.Append(Encoding.ASCII.GetString(buffer, 0, bytesRead));
+                string combined = sb.ToString();
 
-                var sections = fixMsg.Split('|');
-                var tags = PrepareTags(sections);
-
-                Console.WriteLine($"Received: {fixMsg}");
-
-                // Recognize message type
-                string response = await BuildExchangeResponse(tags["35"]);
-
-                if (!string.IsNullOrEmpty(response))
+                while (true)
                 {
-                    await SendAsync(stream, response);
+                    int checksumIndex = combined.IndexOf("|10=");
+                    if (checksumIndex == -1)
+                        break; // nie ma jeszcze końca wiadomości
+
+                    int endIndex = combined.IndexOf('|', checksumIndex + 4);
+                    if (endIndex == -1)
+                        break; // niepełna wiadomość
+
+                    string fixMsg = combined.Substring(0, endIndex + 1);
+                    combined = combined.Substring(endIndex + 1); // reszta zostaje na później
+
+                    Console.WriteLine($"[Exchange] Received: {fixMsg}");
+
+                    //fixMsg = fixMsg.Replace('\x01', '|'); // Only for console logging!
+
+                    var sections = fixMsg.Split('|').ToList();
+                    sections.RemoveAll(x => x == String.Empty);
+
+                    var tags = PrepareTags(sections);
+
+                    // Recognize message type
+                    string response = await BuildExchangeResponse(tags["35"]);
+
+                    if (!string.IsNullOrEmpty(response))
+                    {
+                        await SendAsync(stream, response);
+                    }
+
+                    sb.Clear();
+                    sb.Append(combined);
                 }
             }
         }
@@ -133,10 +159,10 @@ namespace DotNetParser.Exchange
             string rawFix = msg.Replace('|', '\x01');
             byte[] data = Encoding.ASCII.GetBytes(rawFix);
             await stream.WriteAsync(data, 0, data.Length);
-            Console.WriteLine($"Sent: {msg}");
+            Console.WriteLine($"[Exchange] Sent: {msg}");
         }
 
-        public Dictionary<string, string> PrepareTags(string[] sections)
+        public Dictionary<string, string> PrepareTags(List<string> sections)
         {
             var dict = new Dictionary<string, string>();
 

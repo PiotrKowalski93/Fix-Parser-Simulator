@@ -1,6 +1,6 @@
-﻿namespace DotNetParser
+﻿namespace Utils
 {
-    public static class Utils
+    public static class MessageUtils
     {
         //TODO: Add tests
         public static int CalculateChecksum(string msg)
@@ -19,7 +19,7 @@
         public static string PrepareFinalMsg(List<string> bodyFields)
         {
             string body = string.Join('|', bodyFields) + '|';
-            string header = $"8=FIX.4.4|9={body.Length}";
+            string header = $"8=FIX.4.4|9={body.Length}|";
             string fullMessage = header + body;
 
             int chcekSum = CalculateChecksum(fullMessage);

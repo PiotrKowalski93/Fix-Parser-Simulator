@@ -1,4 +1,4 @@
-﻿namespace DotNetParser.Broker
+﻿namespace Broker
 {
     public interface IBrokerMessages
     {

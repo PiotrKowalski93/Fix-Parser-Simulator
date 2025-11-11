@@ -1,6 +1,6 @@
-﻿using System.Drawing;
+﻿using Utils;
 
-namespace DotNetParser.Broker
+namespace Broker
 {
     //| FIX tag 35 | Name                                    
     //| ---------- | ---------------------------------------
@@ -40,7 +40,7 @@ namespace DotNetParser.Broker
                 "98=0",                                         // Encryption (none)
                 "108=30"                                        // Heartbeat in seconds
             };
-            return Utils.PrepareFinalMsg(body);
+            return MessageUtils.PrepareFinalMsg(body);
         }
 
         public string GenerateLogoffMsg()
@@ -53,7 +53,7 @@ namespace DotNetParser.Broker
                 $"34={msgSeqNum++}",
                 $"52={DateTime.UtcNow:yyyyMMdd-HH:mm:ss.fff}"
             };
-            return Utils.PrepareFinalMsg(body);
+            return MessageUtils.PrepareFinalMsg(body);
         }
 
         public string GenerateTestRequest(string testRequestId)
@@ -68,7 +68,7 @@ namespace DotNetParser.Broker
                 $"112={testRequestId}"                          // TestReqID
             };
 
-            return Utils.PrepareFinalMsg(body);
+            return MessageUtils.PrepareFinalMsg(body);
         }
 
         public string GenerateHeartbeat()
@@ -82,7 +82,7 @@ namespace DotNetParser.Broker
                 $"52={DateTime.UtcNow:yyyyMMdd-HH:mm:ss.fff}"
             };
 
-            return Utils.PrepareFinalMsg(body);
+            return MessageUtils.PrepareFinalMsg(body);
         }
         #endregion
 
@@ -114,7 +114,7 @@ namespace DotNetParser.Broker
                 $"60={DateTime.UtcNow:yyyyMMdd-HH:mm:ss}"       // TransactTime                          
             };
 
-            return Utils.PrepareFinalMsg(body);
+            return MessageUtils.PrepareFinalMsg(body);
         }
 
         public string GenerateOrderCancelRequest(
@@ -137,7 +137,7 @@ namespace DotNetParser.Broker
                 $"60={DateTime.UtcNow:yyyyMMdd-HH:mm:ss}"
             };
 
-            return Utils.PrepareFinalMsg(body);
+            return MessageUtils.PrepareFinalMsg(body);
         }
 
         public string GenerateMarketDataSnapshot(
@@ -158,7 +158,7 @@ namespace DotNetParser.Broker
                 $"55={symbol}"                                  // Symbol
             };
 
-            return Utils.PrepareFinalMsg(body);
+            return MessageUtils.PrepareFinalMsg(body);
         }
 
         public string GenerateResendRequest(int beginSeqNo, int endSeqNo)
@@ -174,7 +174,7 @@ namespace DotNetParser.Broker
                 $"16={endSeqNo}"                                // EndSeqNo
             };
 
-            return Utils.PrepareFinalMsg(body);
+            return MessageUtils.PrepareFinalMsg(body);
         }
 
         public string GenerateOrderReplaceRequest(
@@ -201,7 +201,7 @@ namespace DotNetParser.Broker
                 $"60={DateTime.UtcNow:yyyyMMdd-HH:mm:ss}"       // EndSeqNo
             };
 
-            return Utils.PrepareFinalMsg(body);
+            return MessageUtils.PrepareFinalMsg(body);
         }
         #endregion
     }

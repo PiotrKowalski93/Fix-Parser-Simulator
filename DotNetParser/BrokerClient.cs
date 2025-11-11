@@ -1,14 +1,7 @@
-﻿using DotNetParser;
-using DotNetParser.Broker;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Sockets;
-using System.Runtime.InteropServices.JavaScript;
+﻿using System.Net.Sockets;
 using System.Text;
-using System.Threading.Tasks;
 
-namespace FixSimulator.Broker
+namespace Broker
 {
     public class BrokerClient
     {
@@ -16,13 +9,17 @@ namespace FixSimulator.Broker
         private readonly int _port;
         private readonly BrokerFixMessageGenerator _messageGenerator;
 
-        public BrokerClient(string host = "127.0.0.1", int port = 5001)
+        // Session
+        bool _loggedIn = false;
+
+        public BrokerClient(string host = "127.0.0.1", int port = 9000)
         {
             _host = host;
             _port = port;
             _messageGenerator = new BrokerFixMessageGenerator();
         }
 
+        // TODO: Implement session handling, wait for respones
         public async Task StartAsync()
         {
             using var client = new TcpClient();
@@ -34,6 +31,7 @@ namespace FixSimulator.Broker
             // 1️) Logon
             string logon = _messageGenerator.GenerateLogonMsg();
             await SendAsync(stream, logon);
+            //await WaitForLogonAck();
 
             // 2️) New Order
             string newOrder = _messageGenerator.GenerateNewOrderSingle(
@@ -43,8 +41,9 @@ namespace FixSimulator.Broker
                 100, 
                 180.50f,
                 "ExecId",
-                "ExDestinationSample");  // ????
+                "ExDestinationSample");
             await SendAsync(stream, newOrder);
+            //await WaitForExecutionReportAccepted();
 
             // 3️) Cancel Order
             string cancel = _messageGenerator.GenerateOrderCancelRequest(
@@ -53,9 +52,12 @@ namespace FixSimulator.Broker
                 "AAPL",
                 "1");
             await SendAsync(stream, cancel);
+            //await WaitForCancelAck();
 
-            // 4️) Listen for responses
-            await ListenAsync(stream);
+            // 4) Send Logout
+            string logout = _messageGenerator.GenerateLogoffMsg();
+            await SendAsync(stream, cancel);
+            //await WaitForLogoutAck();
         }
 
         private async Task SendAsync(NetworkStream stream, string msg)
@@ -65,7 +67,7 @@ namespace FixSimulator.Broker
             Console.WriteLine($"[Broker] Sent: {msg}");
         }
 
-        private async Task ListenAsync(NetworkStream stream)
+        private async Task WaitForLogonAck(NetworkStream stream)
         {
             var buffer = new byte[4096];
             while (true)
@@ -74,6 +76,8 @@ namespace FixSimulator.Broker
                 if (bytesRead == 0) break;
 
                 string msg = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                msg = msg.Replace('\x01', '|'); // Only for console logging!
+
                 Console.WriteLine($"[Broker] Received: {msg}");
             }
         }

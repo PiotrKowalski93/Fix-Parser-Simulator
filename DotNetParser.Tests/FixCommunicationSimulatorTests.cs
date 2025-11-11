@@ -1,4 +1,4 @@
-﻿using DotNetParser.Exchange;
+﻿using Exchange;
 
 namespace FixSimulator.Tests
 {

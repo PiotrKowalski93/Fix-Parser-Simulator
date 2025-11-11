@@ -1,4 +1,6 @@
-﻿namespace DotNetParser.Exchange
+﻿using Utils;
+
+namespace Exchange
 {
     public static class ExchangeFixMessageGenerator
     {
@@ -13,7 +15,7 @@
             string senderCompID = "EXCHANGE",
             string targetCompID = "BROKER")
         {
-            string sendingTime = Utils.GetFormatedDate();
+            string sendingTime = MessageUtils.GetFormatedDate();
             var bodyFields = new List<string>()
             {
                 "35=8",                         // MsgType = ExecutionReport
@@ -40,7 +42,7 @@
                 $"60={sendingTime}",            // TransactTime - sending time for now
             };
 
-            return Utils.PrepareFinalMsg(bodyFields);
+            return MessageUtils.PrepareFinalMsg(bodyFields);
         }
 
         public static string BuildExecutionReportFill(
@@ -54,7 +56,7 @@
             string senderCompID = "EXCHANGE",
             string targetCompID = "BROKER")
         {
-            string sendingTime = Utils.GetFormatedDate();
+            string sendingTime = MessageUtils.GetFormatedDate();
             var bodyFields = new List<string>()
             {
                 "35=8",
@@ -78,7 +80,7 @@
                 $"60={sendingTime}",
             };
 
-            return Utils.PrepareFinalMsg(bodyFields);
+            return MessageUtils.PrepareFinalMsg(bodyFields);
         }
 
         public static string BuildExecutionReportPartialFill(
@@ -93,7 +95,7 @@
             string senderCompID = "EXCHANGE",
             string targetCompID = "BROKER")
         {
-            string sendingTime = Utils.GetFormatedDate();
+            string sendingTime = MessageUtils.GetFormatedDate();
 
             decimal cumQty = filledQty;           // w prostym przypadku zakładamy 1. częściowe wykonanie
             decimal leavesQty = orderQty - cumQty;
@@ -121,7 +123,7 @@
                 $"151={leavesQty}",
                 $"60={sendingTime}"
             };
-            return Utils.PrepareFinalMsg(bodyFields);
+            return MessageUtils.PrepareFinalMsg(bodyFields);
         }
 
         public static string BuildExecutionReportCancel(
@@ -135,7 +137,7 @@
             string senderCompID = "EXCHANGE",
             string targetCompID = "BROKER")
         {
-            string sendingTime = Utils.GetFormatedDate();
+            string sendingTime = MessageUtils.GetFormatedDate();
             var bodyFields = new List<string>()
             {
                 "35=8",
@@ -156,7 +158,7 @@
                 "151=0",
                 $"60={sendingTime}"
             };
-            return Utils.PrepareFinalMsg(bodyFields);
+            return MessageUtils.PrepareFinalMsg(bodyFields);
         }
 
         public static string BuildExecutionReportReject(
@@ -170,7 +172,7 @@
             string senderCompID = "EXCHANGE",
             string targetCompID = "BROKER")
         {
-            string sendingTime = Utils.GetFormatedDate();
+            string sendingTime = MessageUtils.GetFormatedDate();
             var bodyFields = new List<string>()
             {
                 "35=8",
@@ -189,7 +191,7 @@
                 $"58={reason}",                 // Text = powód odrzucenia
                 $"60={sendingTime}"
             };
-            return Utils.PrepareFinalMsg(bodyFields);
+            return MessageUtils.PrepareFinalMsg(bodyFields);
         }
     }
 }
