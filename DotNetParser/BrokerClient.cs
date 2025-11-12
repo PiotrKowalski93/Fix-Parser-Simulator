@@ -9,6 +9,8 @@ namespace Broker
         private readonly int _port;
         private readonly BrokerFixMessageGenerator _messageGenerator;
 
+        private Thread tcpListenerThread;
+
         // Session
         bool _loggedIn = false;
 
@@ -27,37 +29,67 @@ namespace Broker
             Console.WriteLine($"[Broker] Connected to Exchange at {_host}:{_port}");
 
             var stream = client.GetStream();
+            var _fixSession = new FixSession(stream);
 
-            // 1️) Logon
-            string logon = _messageGenerator.GenerateLogonMsg();
-            await SendAsync(stream, logon);
-            //await WaitForLogonAck();
+            _fixSession.OnMessageReceived += (msgType, fields) =>
+            {
+                switch (msgType)
+                {
+                    case "A": Console.WriteLine("Logon Ack received"); break;
+                    case "0": Console.WriteLine("Heartbeat"); break;
+                    case "8": Console.WriteLine("Execution Report"); break;
+                    case "5": Console.WriteLine("Logout"); break;
+                    default: Console.WriteLine($"Unknown message {msgType}"); break;
+                }
+            };
 
-            // 2️) New Order
-            string newOrder = _messageGenerator.GenerateNewOrderSingle(
-                "ORD123", 
-                "AAPL", 
-                "1", 
-                100, 
-                180.50f,
-                "ExecId",
-                "ExDestinationSample");
-            await SendAsync(stream, newOrder);
-            //await WaitForExecutionReportAccepted();
+            // Listener thread
+            tcpListenerThread = new Thread(async () => await _fixSession.StartListeningAsync());
+            tcpListenerThread.IsBackground = true;
+            tcpListenerThread.Start();
 
-            // 3️) Cancel Order
-            string cancel = _messageGenerator.GenerateOrderCancelRequest(
-                "ORD124", 
-                "ORD123", 
-                "AAPL",
-                "1");
-            await SendAsync(stream, cancel);
-            //await WaitForCancelAck();
+            // TODO: Add Heartbeat manager
 
-            // 4) Send Logout
-            string logout = _messageGenerator.GenerateLogoffMsg();
-            await SendAsync(stream, cancel);
-            //await WaitForLogoutAck();
+            try
+            {
+                // 1️) Logon
+                string logon = _messageGenerator.GenerateLogonMsg();
+                await SendAsync(stream, logon);
+
+                await Task.Delay(1000);
+
+                // 2️) New Order
+                string newOrder = _messageGenerator.GenerateNewOrderSingle(
+                    "ORD123",
+                    "AAPL",
+                    "1",
+                    100,
+                    180.50f,
+                    "ExecId",
+                    "ExDestinationSample");
+                await SendAsync(stream, newOrder);
+
+                await Task.Delay(1000);
+
+                // 3️) Cancel Order
+                string cancel = _messageGenerator.GenerateOrderCancelRequest(
+                    "ORD124",
+                    "ORD123",
+                    "AAPL",
+                    "1");
+                await SendAsync(stream, cancel);
+
+                await Task.Delay(1000);
+
+                // 4) Send Logout
+                string logout = _messageGenerator.GenerateLogoffMsg();
+                await SendAsync(stream, logout);
+            }
+            catch (Exception)
+            {
+                _fixSession.StopListening();
+                throw;
+            }
         }
 
         private async Task SendAsync(NetworkStream stream, string msg)
@@ -65,21 +97,6 @@ namespace Broker
             byte[] bytes = Encoding.UTF8.GetBytes(msg);
             await stream.WriteAsync(bytes, 0, bytes.Length);
             Console.WriteLine($"[Broker] Sent: {msg}");
-        }
-
-        private async Task WaitForLogonAck(NetworkStream stream)
-        {
-            var buffer = new byte[4096];
-            while (true)
-            {
-                int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
-                if (bytesRead == 0) break;
-
-                string msg = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                msg = msg.Replace('\x01', '|'); // Only for console logging!
-
-                Console.WriteLine($"[Broker] Received: {msg}");
-            }
         }
     }
 }

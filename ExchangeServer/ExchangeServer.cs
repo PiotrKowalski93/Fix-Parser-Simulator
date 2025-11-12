@@ -88,6 +88,7 @@ namespace Exchange
             }
         }
 
+        //TODO: use ExchangeFixMessageGenerator, add Session Layer msg gen
         private async Task<string> BuildExchangeResponse(string msgType)
         {
             // Small delay simulation
@@ -101,6 +102,9 @@ namespace Exchange
 
             if (msgType == "F") // Cancel
                 return "8=FIX.4.4|9=110|35=8|49=EXCHANGE|56=BROKER|150=4|39=4|41=ORD123|37=EX123|11=ORD123|17=2|10=155|";
+
+            if (msgType == "5") // Logoff
+                return "8=FIX.4.4|9=110|35=5|49=EXCHANGE|56=BROKER|TODO";
 
             return null;
         }

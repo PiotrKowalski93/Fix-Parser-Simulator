@@ -16,7 +16,7 @@ namespace FixSimulator.Tests
         public void PrepareTags_ShouldReturnDictionaryWithCorrectValues()
         {
             // Arrange
-            string[] input = { "35=8", "49=Sender", "56=Target" };
+            List<string> input = new List<string>() { "35=8", "49=Sender", "56=Target" };
 
             // Act
             var result = _simulator.PrepareTags(input);
@@ -32,7 +32,7 @@ namespace FixSimulator.Tests
         public void PrepareTags_ShouldReturnEmptyDictionary_WhenInputIsEmpty()
         {
             // Arrange
-            string[] input = { };
+            List<string> input = new List<string>() { };
 
             // Act
             var result = _simulator.PrepareTags(input);
@@ -46,7 +46,7 @@ namespace FixSimulator.Tests
         public void PrepareTags_ShouldThrow_WhenKeyIsDuplicated()
         {
             // Arrange
-            string[] input = { "35=8", "35=9" };
+            List<string> input = new List<string>() { "35=8", "35=9" };
 
             // Act & Assert
             Assert.Throws<ArgumentException>(() => _simulator.PrepareTags(input));
@@ -56,7 +56,7 @@ namespace FixSimulator.Tests
         public void PrepareTags_ShouldThrow_WhenSectionHasNoEqualsSign()
         {
             // Arrange
-            string[] input = { "35=8", "InvalidTag" };
+            List<string> input = new List<string>() { "35=8", "InvalidTag" };
 
             // Act & Assert
             Assert.Throws<IndexOutOfRangeException>(() => _simulator.PrepareTags(input));
@@ -66,7 +66,7 @@ namespace FixSimulator.Tests
         public void PrepareTags_ShouldHandleEmptyValue()
         {
             // Arrange
-            string[] input = { "35=" };
+            List<string> input = new List<string>() { "35=" };
 
             // Act
             var result = _simulator.PrepareTags(input);
