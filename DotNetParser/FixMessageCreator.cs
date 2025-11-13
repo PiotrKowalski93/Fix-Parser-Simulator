@@ -15,27 +15,20 @@ namespace Broker
     //| `2`        | ** Resend Request **
     //| `G`        | ** Replace Order Request **
 
-    public class BrokerFixMessageGenerator : IBrokerMessages
+    public static class FixMessageCreator //: IBrokerMessages
     {
-        private static int msgSeqNum = 1;
-        private string _senderCompID;
-        private string _targetCompID;
-
-        public BrokerFixMessageGenerator(string senderCompID = "BROKER", string targetCompID = "EXCHANGE")
-        {
-            _senderCompID = senderCompID;
-            _targetCompID = targetCompID;
-        }
-
         #region Session Layer
-        public string GenerateLogonMsg()
+        public static string GenerateLogonMsg(
+            string senderCompId, 
+            string targetCompId, 
+            int msgSeqNum)
         {
             var body = new List<string>()
             {
                 "35=A",                                         // Logon
-                $"49={_senderCompID}",
-                $"56={_targetCompID}",
-                $"34={msgSeqNum++}",
+                $"49={senderCompId}",
+                $"56={targetCompId}",
+                $"34={msgSeqNum}",
                 $"52={DateTime.UtcNow:yyyyMMdd-HH:mm:ss.fff}",
                 "98=0",                                         // Encryption (none)
                 "108=30"                                        // Heartbeat in seconds
@@ -43,27 +36,34 @@ namespace Broker
             return MessageUtils.PrepareFinalMsg(body);
         }
 
-        public string GenerateLogoffMsg()
+        public static string GenerateLogoffMsg(
+            string senderCompId,
+            string targetCompId,
+            string msgSeqNum)
         {
             var body = new List<string>()
             {
                 "35=5",                                         // Logout
-                $"49={_senderCompID}",
-                $"56={_targetCompID}",
-                $"34={msgSeqNum++}",
+                $"49={senderCompId}",
+                $"56={targetCompId}",
+                $"34={msgSeqNum}",
                 $"52={DateTime.UtcNow:yyyyMMdd-HH:mm:ss.fff}"
             };
             return MessageUtils.PrepareFinalMsg(body);
         }
 
-        public string GenerateTestRequest(string testRequestId)
+        public static string GenerateTestRequest(
+            string senderCompId,
+            string targetCompId,
+            string msgSeqNum,
+            string testRequestId)
         {
             var body = new List<string>()
             {
                 "35=1",                                         // TestRequest
-                $"49={_senderCompID}",
-                $"56={_targetCompID}",
-                $"34={msgSeqNum++}",
+                $"49={senderCompId}",
+                $"56={targetCompId}",
+                $"34={msgSeqNum}",
                 $"52={DateTime.UtcNow:yyyyMMdd-HH:mm:ss.fff}",
                 $"112={testRequestId}"                          // TestReqID
             };
@@ -71,14 +71,18 @@ namespace Broker
             return MessageUtils.PrepareFinalMsg(body);
         }
 
-        public string GenerateHeartbeat()
+        public static string GenerateHeartbeat(
+            string senderCompId,
+            string targetCompId,
+            string msgSeqNum,
+            string testRequestId)
         {
             var body = new List<string>()
             {
                 "35=0",                                         // Heartbeat
-                $"49={_senderCompID}",
-                $"56={_targetCompID}",
-                $"34={msgSeqNum++}",
+                $"49={senderCompId}",
+                $"56={targetCompId}",
+                $"34={msgSeqNum}",
                 $"52={DateTime.UtcNow:yyyyMMdd-HH:mm:ss.fff}"
             };
 
@@ -87,7 +91,10 @@ namespace Broker
         #endregion
 
         #region Application Layer
-        public string GenerateNewOrderSingle(
+        public static string GenerateNewOrderSingle(
+            string senderCompId,
+            string targetCompId,
+            string msgSeqNum,
             string clOrdId, 
             string symbol, 
             string side, 
@@ -99,9 +106,9 @@ namespace Broker
             var body = new List<string>()
             {
                 "35=D",                                         // NewOrderSingle
-                $"49={_senderCompID}",
-                $"56={_targetCompID}",
-                $"34={msgSeqNum++}",
+                $"49={senderCompId}",
+                $"56={targetCompId}",
+                $"34={msgSeqNum}",
                 $"52={DateTime.UtcNow:yyyyMMdd-HH:mm:ss.fff}",
                 $"11={clOrdId}",                                // Client Order ID
                 $"55={symbol}",                                 // Symbol
@@ -117,7 +124,10 @@ namespace Broker
             return MessageUtils.PrepareFinalMsg(body);
         }
 
-        public string GenerateOrderCancelRequest(
+        public static string GenerateOrderCancelRequest(
+            string senderCompId,
+            string targetCompId,
+            string msgSeqNum,
             string clOrdId,
             string orderNumber,
             string symbol,
@@ -126,9 +136,9 @@ namespace Broker
             var body = new List<string>()
             {
                 "35=F",                                         // OrderCancelRequest
-                $"49={_senderCompID}",
-                $"56={_targetCompID}",
-                $"34={msgSeqNum++}",
+                $"49={senderCompId}",
+                $"56={targetCompId}",
+                $"34={msgSeqNum}",
                 $"52={DateTime.UtcNow:yyyyMMdd-HH:mm:ss.fff}",
                 $"11={clOrdId}",                                // OrigClOrdID
                 $"41={orderNumber}",                            // Target Order to cancel
@@ -140,16 +150,19 @@ namespace Broker
             return MessageUtils.PrepareFinalMsg(body);
         }
 
-        public string GenerateMarketDataSnapshot(
+        public static string GenerateMarketDataSnapshot(
+            string senderCompId,
+            string targetCompId,
+            string msgSeqNum,
             string msgRequestId,
             string symbol)
         {
             var body = new List<string>()
             {
                 "35=V",                                         // MarketDataRequest
-                $"49={_senderCompID}",
-                $"56={_targetCompID}",
-                $"34={msgSeqNum++}",
+                $"49={senderCompId}",
+                $"56={targetCompId}",
+                $"34={msgSeqNum}",
                 $"52={DateTime.UtcNow:yyyyMMdd-HH:mm:ss.fff}",
                 $"262={msgRequestId}",                          // MDReqID
                 "263=1",                                        // SubscriptionRequestType = 1 (snapshot + updates)
@@ -161,14 +174,19 @@ namespace Broker
             return MessageUtils.PrepareFinalMsg(body);
         }
 
-        public string GenerateResendRequest(int beginSeqNo, int endSeqNo)
+        public static string GenerateResendRequest(
+            string senderCompId,
+            string targetCompId,
+            string msgSeqNum,
+            int beginSeqNo, 
+            int endSeqNo)
         {
             var body = new List<string>()
             {
                 "35=2",                                         // Resend Request
-                $"49={_senderCompID}",
-                $"56={_targetCompID}",
-                $"34={msgSeqNum++}",
+                $"49={senderCompId}",
+                $"56={targetCompId}",
+                $"34={msgSeqNum}",
                 $"52={DateTime.UtcNow:yyyyMMdd-HH:mm:ss.fff}",
                 $"7={beginSeqNo}",                              // BeginSeqNo
                 $"16={endSeqNo}"                                // EndSeqNo
@@ -177,7 +195,10 @@ namespace Broker
             return MessageUtils.PrepareFinalMsg(body);
         }
 
-        public string GenerateOrderReplaceRequest(
+        public static string GenerateOrderReplaceRequest(
+            string senderCompId,
+            string targetCompId,
+            string msgSeqNum,
             string originalClOrdId,
             string newClOrdId,
             string symbol,
@@ -188,9 +209,9 @@ namespace Broker
             var body = new List<string>()
             {
                 "35=G",                                         // OrderCancelReplaceRequest
-                $"49={_senderCompID}",
-                $"56={_targetCompID}",
-                $"34={msgSeqNum++}",
+                $"49={senderCompId}",
+                $"56={targetCompId}",
+                $"34={msgSeqNum}",
                 $"52={DateTime.UtcNow:yyyyMMdd-HH:mm:ss.fff}",
                 $"41={originalClOrdId}",                        // OrigClOrdID (previous order)
                 $"11={newClOrdId}",                             // New ClOrdID (new replacement)

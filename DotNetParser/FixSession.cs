@@ -1,83 +1,151 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Sockets;
+﻿using System.Net.Sockets;
+using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Broker
 {
     public class FixSession
     {
-        private readonly NetworkStream _stream;
+        private TcpClient _tcpClient;
+        private NetworkStream _stream;
         private readonly CancellationTokenSource _cts;
 
-        //public Action<string>? OnRawMessage;
-        public Action<string, Dictionary<string, string>>? OnMessageReceived;
+        // Session 
+        public bool Connected;
+        public DateTime _lastReceived;
 
-        public FixSession(NetworkStream stream)
+        private int _heartbeatIntervalSec;
+        private int seqNumber;
+        private string _senderCompId;
+        private string _targetCompId;
+
+        // Events for incoming messages
+        //public event EventHandler<string>? MessageReceived;
+
+        // Internal session handling
+        private event EventHandler? HeartbeatSent;
+        private event EventHandler? TestRequestSent;
+        private event EventHandler? HeartbeatTimeout;
+        private event EventHandler? Disconnected;
+        private event EventHandler? LogonReceived;
+        private event EventHandler? LogoutReceived;
+
+        public FixSession(int heartbeatIntervalSec = 10,
+            string senderCompId = "BROKER", 
+            string targetCompId = "EXCHANGE")
         {
-            _stream = stream;
+            _heartbeatIntervalSec = heartbeatIntervalSec;
             _cts = new CancellationTokenSource();
+            _senderCompId = senderCompId;
+            _targetCompId = targetCompId;
         }
 
-        public async Task StartListeningAsync()
+        public async Task OpenSessionAsync(string host = "127.0.0.1", int port = 9000)
+        {
+            try
+            {
+                _tcpClient = new TcpClient();
+                await _tcpClient.ConnectAsync(host, port);
+                Console.WriteLine($"[Broker] Connected to Exchange at {host}:{port}");
+                _stream = _tcpClient.GetStream();
+
+                seqNumber = 1;
+                // Send Logon
+                Console.WriteLine($"[Broker] Send Logon");
+                await SendAsync(FixMessageCreator.GenerateLogonMsg(_senderCompId, _targetCompId, seqNumber++));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Broker] Exception during establishing connectopmn to Exchange at {host}:{port}");
+                Console.WriteLine($"{ex.Message}");
+                return;
+            }
+
+            //Run Listener
+            Task.Run(() => StartListeningAsync());
+
+            //Run heartbeat monitor
+            Task.Run(() => HeartbeatMonitor());
+        }
+
+        private async Task StartListeningAsync()
         {
             var buffer = new byte[4096];
-            var receivedData = new StringBuilder();
-
-            while (!_cts.Token.IsCancellationRequested)
+            try
             {
-                if (!_stream.DataAvailable)
+                while (!_cts.Token.IsCancellationRequested)
                 {
-                    await Task.Delay(10);
-                    continue;
-                }
-
-                int bytesRead = await _stream.ReadAsync(buffer, 0, buffer.Length, _cts.Token);
-                if (bytesRead == 0)
-                {
-                    Console.WriteLine("Connection closed.");
-                    break;
-                }
-
-                string chunk = Encoding.ASCII.GetString(buffer, 0, bytesRead);
-                receivedData.Append(chunk);
-
-                // Możliwe, że mamy kilka wiadomości FIX w jednym streamie
-                string[] messages = receivedData.ToString().Split("8=FIX.4.4");
-                for (int i = 1; i < messages.Length; i++)
-                {
-                    string msg = "8=FIX.4.4" + messages[i];
-                    msg = msg.Replace('\x01', '|'); // dla czytelności
-
-                    //OnRawMessage?.Invoke(msg);
-
-                    var fields = ParseFixMessage(msg);
-                    if (fields.TryGetValue("35", out var msgType))
+                    int bytesRead = await _stream.ReadAsync(buffer, 0, buffer.Length, _cts.Token);
+                    if (bytesRead == 0)
                     {
-                        OnMessageReceived?.Invoke(msgType, fields);
+                        Disconnected?.Invoke(this, EventArgs.Empty);
+                        break;
+                    }
+
+                    var message = Encoding.ASCII.GetString(buffer, 0, bytesRead);
+                    _lastReceived = DateTime.UtcNow;
+
+                    MessageReceived(message);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Session] Error: {ex.Message}");
+                Disconnected?.Invoke(this, EventArgs.Empty);
+            }
+        }
+
+        private void MessageReceived(string message)
+        {
+            Console.WriteLine($"[Exchange] {message}");
+            // TODO: Add mapping Field => Event
+            //if (message.Contains("35=A")) LogonReceived?.Invoke(this, EventArgs.Empty);
+            //if (message.Contains("35=5")) LogoutReceived?.Invoke(this, EventArgs.Empty);
+        }
+
+        // This loop is keeping Session alive
+        private async Task HeartbeatMonitor()
+        {
+            try
+            {
+                while (!_cts.Token.IsCancellationRequested)
+                {
+                    await Task.Delay(_heartbeatIntervalSec * 1000, _cts.Token);
+
+                    var diff = DateTime.UtcNow - _lastReceived;
+
+                    if (diff.TotalSeconds > _heartbeatIntervalSec * 1.5)
+                    {
+                        HeartbeatTimeout?.Invoke(this, EventArgs.Empty);
+                        // TODO: Build test request
+                        await SendAsync("");
+                        TestRequestSent?.Invoke(this, EventArgs.Empty);
+                    }
+                    else
+                    {
+                        //TODO: Build heartbeat
+                        await SendAsync("");
+                        HeartbeatSent?.Invoke(this, EventArgs.Empty);
                     }
                 }
-
-                receivedData.Clear(); // wyczyść bufor po przetworzeniu
             }
-        }
-
-        private Dictionary<string, string> ParseFixMessage(string msg)
-        {
-            var fields = new Dictionary<string, string>();
-            var parts = msg.Split('|');
-            foreach (var p in parts)
+            catch (TaskCanceledException)
             {
-                var kv = p.Split('=');
-                if (kv.Length == 2)
-                    fields[kv[0]] = kv[1];
+                // TODO
             }
-            return fields;
         }
 
-        public void StopListening() => _cts.Cancel();
-    }
+        public async Task SendAsync(string fixMessage)
+        {
+            //var msg = fixMessage.Replace("|", "\x01");
+            byte[] bytes = Encoding.UTF8.GetBytes(fixMessage);
+            await _stream.WriteAsync(bytes, 0, bytes.Length);
+        }
 
+        public void StopListening()
+        {
+            _cts.Cancel();
+            _tcpClient.Dispose();
+        } 
+    }
 }
