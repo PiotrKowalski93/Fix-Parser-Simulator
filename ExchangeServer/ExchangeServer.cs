@@ -95,16 +95,40 @@ namespace Exchange
             await Task.Delay(500);
 
             if (msgType == "A") // Logon
+            {
+                Console.WriteLine($"[Broker] Logon recieved");
                 return "8=FIX.4.4|9=65|35=A|34=1|49=EXCHANGE|56=BROKER|108=30|10=128|";
+            }
 
             if (msgType == "D") // New Order
-                return "8=FIX.4.4|9=120|35=8|49=EXCHANGE|56=BROKER|150=0|39=0|55=AAPL|54=1|38=100|44=180.50|37=EX123|17=1|10=220|";
+            {
+                Console.WriteLine($"[Broker] NewOrder recieved");
+                return "8=FIX.4.4|9=120|35=D|49=EXCHANGE|56=BROKER|150=0|39=0|55=AAPL|54=1|38=100|44=180.50|37=EX123|17=1|10=220|";
+            }
 
             if (msgType == "F") // Cancel
-                return "8=FIX.4.4|9=110|35=8|49=EXCHANGE|56=BROKER|150=4|39=4|41=ORD123|37=EX123|11=ORD123|17=2|10=155|";
+            {
+                Console.WriteLine($"[Broker] Cancel recieved");
+                return "8=FIX.4.4|9=110|35=F|49=EXCHANGE|56=BROKER|150=4|39=4|41=ORD123|37=EX123|11=ORD123|17=2|10=155|";
+            }
 
             if (msgType == "5") // Logoff
+            {
+                Console.WriteLine($"[Broker] Logoff recieved");
                 return "8=FIX.4.4|9=110|35=5|49=EXCHANGE|56=BROKER|TODO";
+            }
+               
+            if (msgType == "1") // TestRequest
+            {
+                Console.WriteLine($"[Broker] TestRequest recieved");
+                return "8=FIX.4.4|9=110|35=1|49=EXCHANGE|56=BROKER|TODO";
+            }
+
+            if (msgType == "0") // Heartbeat
+            {
+                Console.WriteLine($"[Broker] Heartbeat recieved");
+                return "8=FIX.4.4|9=110|35=0|49=EXCHANGE|56=BROKER|TODO";
+            }
 
             return null;
         }

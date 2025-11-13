@@ -39,7 +39,7 @@ namespace Broker
         public static string GenerateLogoffMsg(
             string senderCompId,
             string targetCompId,
-            string msgSeqNum)
+            int msgSeqNum)
         {
             var body = new List<string>()
             {
@@ -55,7 +55,7 @@ namespace Broker
         public static string GenerateTestRequest(
             string senderCompId,
             string targetCompId,
-            string msgSeqNum,
+            int msgSeqNum,
             string testRequestId)
         {
             var body = new List<string>()
@@ -74,8 +74,7 @@ namespace Broker
         public static string GenerateHeartbeat(
             string senderCompId,
             string targetCompId,
-            string msgSeqNum,
-            string testRequestId)
+            int msgSeqNum)
         {
             var body = new List<string>()
             {
@@ -94,7 +93,7 @@ namespace Broker
         public static string GenerateNewOrderSingle(
             string senderCompId,
             string targetCompId,
-            string msgSeqNum,
+            int msgSeqNum,
             string clOrdId, 
             string symbol, 
             string side, 
@@ -127,7 +126,7 @@ namespace Broker
         public static string GenerateOrderCancelRequest(
             string senderCompId,
             string targetCompId,
-            string msgSeqNum,
+            int msgSeqNum,
             string clOrdId,
             string orderNumber,
             string symbol,
@@ -153,7 +152,7 @@ namespace Broker
         public static string GenerateMarketDataSnapshot(
             string senderCompId,
             string targetCompId,
-            string msgSeqNum,
+            int msgSeqNum,
             string msgRequestId,
             string symbol)
         {
@@ -177,7 +176,7 @@ namespace Broker
         public static string GenerateResendRequest(
             string senderCompId,
             string targetCompId,
-            string msgSeqNum,
+            int msgSeqNum,
             int beginSeqNo, 
             int endSeqNo)
         {
@@ -198,7 +197,7 @@ namespace Broker
         public static string GenerateOrderReplaceRequest(
             string senderCompId,
             string targetCompId,
-            string msgSeqNum,
+            int msgSeqNum,
             string originalClOrdId,
             string newClOrdId,
             string symbol,

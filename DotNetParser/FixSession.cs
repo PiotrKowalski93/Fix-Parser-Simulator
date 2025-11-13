@@ -1,5 +1,4 @@
 ﻿using System.Net.Sockets;
-using System.Security.Cryptography;
 using System.Text;
 
 namespace Broker
@@ -15,7 +14,7 @@ namespace Broker
         public DateTime _lastReceived;
 
         private int _heartbeatIntervalSec;
-        private int seqNumber;
+        private int _seqNumber;
         private string _senderCompId;
         private string _targetCompId;
 
@@ -49,10 +48,10 @@ namespace Broker
                 Console.WriteLine($"[Broker] Connected to Exchange at {host}:{port}");
                 _stream = _tcpClient.GetStream();
 
-                seqNumber = 1;
+                _seqNumber = 1;
                 // Send Logon
                 Console.WriteLine($"[Broker] Send Logon");
-                await SendAsync(FixMessageCreator.GenerateLogonMsg(_senderCompId, _targetCompId, seqNumber++));
+                await SendAsync(FixMessageCreator.GenerateLogonMsg(_senderCompId, _targetCompId, _seqNumber++));
             }
             catch (Exception ex)
             {
@@ -98,12 +97,13 @@ namespace Broker
         private void MessageReceived(string message)
         {
             Console.WriteLine($"[Exchange] {message}");
+
             // TODO: Add mapping Field => Event
             //if (message.Contains("35=A")) LogonReceived?.Invoke(this, EventArgs.Empty);
             //if (message.Contains("35=5")) LogoutReceived?.Invoke(this, EventArgs.Empty);
         }
 
-        // This loop is keeping Session alive
+        // This loop keeps Session alive
         private async Task HeartbeatMonitor()
         {
             try
@@ -117,14 +117,17 @@ namespace Broker
                     if (diff.TotalSeconds > _heartbeatIntervalSec * 1.5)
                     {
                         HeartbeatTimeout?.Invoke(this, EventArgs.Empty);
-                        // TODO: Build test request
-                        await SendAsync("");
+
+                        Console.WriteLine($"[Broker] Sent TestRequest");
+                        await SendAsync(FixMessageCreator.GenerateTestRequest(_senderCompId, _targetCompId, _seqNumber, "TestReqId"));
+
                         TestRequestSent?.Invoke(this, EventArgs.Empty);
                     }
                     else
                     {
-                        //TODO: Build heartbeat
-                        await SendAsync("");
+                        Console.WriteLine($"[Broker] Sent Heartbeat");
+                        await SendAsync(FixMessageCreator.GenerateHeartbeat(_senderCompId, _targetCompId, _seqNumber));
+
                         HeartbeatSent?.Invoke(this, EventArgs.Empty);
                     }
                 }
