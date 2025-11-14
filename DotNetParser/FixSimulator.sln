@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Exchange", "..\ExchangeServ
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Utils", "..\Utils\Utils.csproj", "{42398C79-0549-4C56-84A0-86232B84D5ED}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BrokerQuickFix", "..\BrokerQuickFix\BrokerQuickFix.csproj", "{9BD44DD2-9A3E-48CB-B37E-296DA93E8554}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{42398C79-0549-4C56-84A0-86232B84D5ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{42398C79-0549-4C56-84A0-86232B84D5ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{42398C79-0549-4C56-84A0-86232B84D5ED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9BD44DD2-9A3E-48CB-B37E-296DA93E8554}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9BD44DD2-9A3E-48CB-B37E-296DA93E8554}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9BD44DD2-9A3E-48CB-B37E-296DA93E8554}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9BD44DD2-9A3E-48CB-B37E-296DA93E8554}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
