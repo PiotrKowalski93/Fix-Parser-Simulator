@@ -1,4 +1,5 @@
 ﻿using QuickFix;
+using QuickFix.Fields;
 
 namespace BrokerQuickFix
 {

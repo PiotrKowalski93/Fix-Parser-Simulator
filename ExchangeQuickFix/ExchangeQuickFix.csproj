@@ -12,11 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Configuration\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="Configuration\client.cfg">
+    <None Update="Configuration\exchange.cfg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="FIX44.xml">

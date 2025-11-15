@@ -18,9 +18,7 @@
             // Poczekaj na logon
             Console.WriteLine("Press ENTER to send a test order...");
             Console.ReadLine();
-            
-
-            
+                        
             orderService.SendNewOrderSingle("AAPL", 10, 150.25m);
 
             Console.WriteLine("Press ENTER to exit.");
