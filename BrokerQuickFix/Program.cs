@@ -2,29 +2,44 @@
 {
     internal class Program
     {
+        static FixClient _client;
+        static OrderService _orderService;
+
         static void Main(string[] args)
         {
-            var client = new FixClient("Configuration/client.cfg");
-            client.Start();
+            _client = new FixClient("Configuration/client.cfg");
+            _client.Start();
 
-            if (client.SessionId == null)
+            if (_client.SessionId == null)
             {
                 Console.WriteLine("No FIX session found.");
                 return;
             }
 
-            var orderService = new OrderService(client.SessionId);
+            _orderService = new OrderService(_client.SessionId);
 
-            // Poczekaj na logon
-            Console.WriteLine("Press ENTER to send a test order...");
-            Console.ReadLine();
-                        
-            orderService.SendNewOrderSingle("AAPL", 10, 150.25m);
+            Console.WriteLine("Wait for logon...");
 
-            Console.WriteLine("Press ENTER to exit.");
-            Console.ReadLine();
+            bool shouldContinue;
+            do
+            {
+                var command = Console.ReadLine();
+                shouldContinue = HandleCommand(command);
+            } while (shouldContinue);
 
-            client.Stop();
+            _client.Stop();
+        }
+
+        private static bool HandleCommand(string? command)
+        {
+            switch (command)
+            {
+                case "Send NewOrderSingle":
+                    _orderService.SendNewOrderSingle("AAPL", 10, 150.25m);
+                    return true;
+                default:
+                    return false;
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using QuickFix;
+using QuickFix.Fields;
 
 namespace ExchangeQuickFix
 {
@@ -28,6 +29,27 @@ namespace ExchangeQuickFix
         {
             Console.WriteLine("[FixExchange] Stopping...");
             _acceptor.Stop();
+        }
+
+        public void SimulateResend()
+        {
+            if (_app.SessionID == null)
+            {
+                Console.WriteLine("No session established yet.");
+                return;
+            }
+
+            int gapFrom = 5;
+            int gapTo = 7;
+
+            Message rr = new Message();
+            rr.Header.SetField(new MsgType("2"));
+            rr.SetField(new BeginSeqNo(gapFrom));
+            rr.SetField(new EndSeqNo(gapTo));
+
+            Session.SendToTarget(rr, _app.SessionID);
+
+            Console.WriteLine("[FixExchange] Resend message sent to session " + _app.SessionID);
         }
     }
 }

@@ -7,7 +7,7 @@ namespace BrokerQuickFix
     {
         private readonly FixClientApp _app;
         private readonly SocketInitiator _initiator;
-        public SessionID? SessionId { get; }
+        public SessionID? SessionId { get; private set; }
 
         public FixClient(string configPath)
         {

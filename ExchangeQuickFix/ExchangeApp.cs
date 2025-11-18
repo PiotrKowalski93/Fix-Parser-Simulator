@@ -5,14 +5,18 @@ namespace ExchangeQuickFix
 {
     public class ExchangeApp : MessageCracker, IApplication
     {
+        public SessionID SessionID { get; private set; }
+
         public void OnCreate(SessionID sessionID)
         {
             Console.WriteLine($"[Exchange] Session created: {sessionID}");
+            SessionID = sessionID;
         }
 
         public void OnLogon(SessionID sessionID)
         {
             Console.WriteLine($"[Exchange] LOGON: {sessionID}");
+            SessionID = sessionID;
         }
 
         public void OnLogout(SessionID sessionID)
@@ -38,7 +42,7 @@ namespace ExchangeQuickFix
         // We can manipulate msg before sending to exchange and right afer reciving, before logic
         public void ToAdmin(Message msg, SessionID sessionID)
         {
-            Console.WriteLine($"[Exchange -> Admin] {msg}");
+            Console.WriteLine($"[ToAdmin] {msg}");
 
             // Prod Scenario?
             //var msgType = message.Header.GetString(Tags.MsgType);
@@ -56,9 +60,10 @@ namespace ExchangeQuickFix
         // 2) Session monitoring for Metrics and Alerts
         public void FromAdmin(Message msg, SessionID sessionID)
         {
-            Console.WriteLine($"[Admin -> Exchange] {msg}");
+            var seq = msg.Header.GetInt(Tags.MsgSeqNum);
+            var type = msg.Header.GetString(Tags.MsgType);
 
-            var msgType = msg.Header.GetString(Tags.MsgType);
+            Console.WriteLine($"[FromAdmin] SeqNum: {seq} | Type: {type}");
 
             //if (msgType == MsgType.LOGOUT)
             //{
@@ -73,16 +78,21 @@ namespace ExchangeQuickFix
         }
         // --------------------------------------------
 
-
         public void ToApp(Message msg, SessionID sessionID)
         {
-            Console.WriteLine($"[Exchange -> Client] {msg}");
+            var seq = msg.Header.GetInt(Tags.MsgSeqNum);
+            var type = msg.Header.GetString(Tags.MsgType);
+
+            Console.WriteLine($"[Exchange -> Client] SeqNum: {seq} | Type: {type}");
         }
 
         public void FromApp(Message msg, SessionID sessionID)
         {
-            Console.WriteLine($"[Client -> Exchange] {msg}");
-            Crack(msg, sessionID);
+            var seq = msg.Header.GetInt(Tags.MsgSeqNum);
+            var type = msg.Header.GetString(Tags.MsgType);
+
+            Console.WriteLine($"[Client -> Exchange] SeqNum: {seq} | Type: {type}");
+            //Crack(msg, sessionID);
         }
 
         // ---------------------------------------
@@ -90,8 +100,6 @@ namespace ExchangeQuickFix
         // ---------------------------------------
         public void OnMessage(QuickFix.FIX44.NewOrderSingle order, SessionID sessionID)
         {
-            Console.WriteLine("[Exchange] Received NewOrderSingle");
-
             var orderId = Guid.NewGuid().ToString();
             var clOrdId = order.GetField(Tags.ClOrdID);
 
@@ -115,25 +123,25 @@ namespace ExchangeQuickFix
             Session.SendToTarget(ack, sessionID);
 
             // STEP 2: Fill the order (FILLED)
-            var fill = new QuickFix.FIX44.ExecutionReport(
-                new OrderID(orderId),
-                new ExecID(Guid.NewGuid().ToString()),
-                new ExecType(ExecType.FILL),
-                new OrdStatus(OrdStatus.FILLED),
-                new Symbol(order.Symbol.getValue()),
-                new Side(order.Side.getValue()),
-                new LeavesQty(0),
-                new CumQty(order.OrderQty.getValue()),
-                new AvgPx(0)
-            );
+            //var fill = new QuickFix.FIX44.ExecutionReport(
+            //    new OrderID(orderId),
+            //    new ExecID(Guid.NewGuid().ToString()),
+            //    new ExecType(ExecType.FILL),
+            //    new OrdStatus(OrdStatus.FILLED),
+            //    new Symbol(order.Symbol.getValue()),
+            //    new Side(order.Side.getValue()),
+            //    new LeavesQty(0),
+            //    new CumQty(order.OrderQty.getValue()),
+            //    new AvgPx(0)
+            //);
 
-            fill.SetField(new ClOrdID(clOrdId));
-            fill.SetField(new Symbol(order.Symbol.getValue()));
-            fill.SetField(new LastQty(order.OrderQty.getValue()));
-            fill.SetField(new LastPx(order.Price.getValue()));
-            fill.SetField(new AvgPx(order.Price.getValue()));
+            //fill.SetField(new ClOrdID(clOrdId));
+            //fill.SetField(new Symbol(order.Symbol.getValue()));
+            //fill.SetField(new LastQty(order.OrderQty.getValue()));
+            //fill.SetField(new LastPx(order.Price.getValue()));
+            //fill.SetField(new AvgPx(order.Price.getValue()));
 
-            Session.SendToTarget(fill, sessionID);
+            //Session.SendToTarget(fill, sessionID);
         }
     }
 
