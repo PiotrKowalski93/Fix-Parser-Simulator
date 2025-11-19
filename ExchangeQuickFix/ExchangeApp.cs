@@ -123,35 +123,26 @@ namespace ExchangeQuickFix
             ack.SetField(new AvgPx(0));
 
             Session.SendToTarget(ack, sessionID);
-
-            // STEP 2: Fill the order (FILLED)
-            //var fill = new QuickFix.FIX44.ExecutionReport(
-            //    new OrderID(orderId),
-            //    new ExecID(Guid.NewGuid().ToString()),
-            //    new ExecType(ExecType.FILL),
-            //    new OrdStatus(OrdStatus.FILLED),
-            //    new Symbol(order.Symbol.getValue()),
-            //    new Side(order.Side.getValue()),
-            //    new LeavesQty(0),
-            //    new CumQty(order.OrderQty.getValue()),
-            //    new AvgPx(0)
-            //);
-
-            //fill.SetField(new ClOrdID(clOrdId));
-            //fill.SetField(new Symbol(order.Symbol.getValue()));
-            //fill.SetField(new LastQty(order.OrderQty.getValue()));
-            //fill.SetField(new LastPx(order.Price.getValue()));
-            //fill.SetField(new AvgPx(order.Price.getValue()));
-
-            //Session.SendToTarget(fill, sessionID);
         }
+
+        public void OnMessage(QuickFix.FIX44.OrderCancelRequest cancelRequest, SessionID sessionID)
+        {
+            //TODO: Implement Response
+        }
+        public void OnMessage(QuickFix.FIX44.OrderCancelReplaceRequest replaceRequest, SessionID sessionID)
+        {
+            //TODO: Implement Response
+        }
+
+        // ---------------------------------------
+
 
         private void SendGapFill(SessionID sessionID, int newSeq)
         {
             var seqReset = new QuickFix.FIX44.SequenceReset();
 
             seqReset.Set(new GapFillFlag(true));  // 123=Y
-            seqReset.Set(new NewSeqNo(newSeq));   // 36 = next seqnum
+            seqReset.Set(new NewSeqNo(newSeq));   // next seqnum
 
             Console.WriteLine($"[EXCHANGE] Sending GapFill, NewSeqNo={newSeq}");
 

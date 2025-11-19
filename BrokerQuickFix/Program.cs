@@ -32,13 +32,23 @@
 
         private static bool HandleCommand(string? command)
         {
+            string? ordId;
+
             switch (command)
             {
                 case "Send NewOrderSingle":
                     _orderService.SendNewOrderSingle("AAPL", 10, 150.25m);
                     return true;
                 case "Send Resend":
-                    _orderService.SendResend(2, 3);
+                    _orderService.SendResend(3, 6);
+                    return true;
+                case "Send Cancel":
+                    ordId = Console.ReadLine();
+                    _orderService.SendCancel(ordId, "AAPL", '1', 10);
+                    return true;
+                case "Send Replace":
+                    ordId = Console.ReadLine();
+                    _orderService.SendReplace(ordId,"AAPL", '1', 15, 145.25m);
                     return true;
                 default:
                     return false;

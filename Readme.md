@@ -1,4 +1,8 @@
-## 1) Summary of the FIX 4.4 Protocol – What it is & Why use it
+[Session Flow](/docs/sessionFlow.md)
+[Order Flow](/docs/orderFlow.md)
+[Test Cases](/docs/testCases.md)
+
+### Summary of the FIX 4.4 Protocol – What it is & Why use it
 
 **Purpose / Use-case**
 
@@ -31,7 +35,7 @@
 
 ---
 
-## 2) Some of the Most Popular FIX 4.4 Messages (with short descriptions)
+### Some of the Most Popular FIX 4.4 Messages (with short descriptions)
 
 Here are selected messages (administrative & application) you’ll definitely see. Format shown in tag=value pipe-delimited (| represents SOH in docs).
 
@@ -71,15 +75,12 @@ These kinds of examples help illustrate the tag/value structure and how your FIX
 
 ---
 
-## 3) Link to the Official FIX 4.4 Documentation
+### Link to the Official FIX 4.4 Documentation
 
 Here is a widely accepted link in the algo-trading community to the FIX 4.4 specification:
 
 * Official specification with Errata: [FIX 4.4 Specification with 20030618 Errata](https://www.fixtrading.org/standards/fix-4-4/) ([FIX Trading Community][6])
 * For dictionary/reference lookup of tags & fields: OnixS “FIX Dictionary – FIX 4.4” page: [https://www.onixs.biz/fix-dictionary/4.4/](https://www.onixs.biz/fix-dictionary/4.4/) ([OnixS][7])
----
-
-If you like, I can **prepare a ready-to-paste Word/Markdown section** with formatted headings, code blocks and links (so you just drop it into your doc). Would you like that?
 
 [1]: https://en.wikipedia.org/wiki/Financial_Information_eXchange?utm_source=chatgpt.com "Financial Information eXchange"
 [2]: https://medium.com/%40Noetic_Ninja/fix-protocol-a-comprehensive-guide-for-traders-50752b54da27?utm_source=chatgpt.com "FIX Protocol: A Simple Guide for Traders | by Jay G"
@@ -88,74 +89,3 @@ If you like, I can **prepare a ready-to-paste Word/Markdown section** with forma
 [5]: https://www.quickfixj.org/?utm_source=chatgpt.com "QuickFIX/J - Free, Open Source Java FIX engine"
 [6]: https://www.fixtrading.org/standards/fix-4-4/?utm_source=chatgpt.com "FIX 4.4 Specification with 20030618 Errata"
 [7]: https://www.onixs.biz/fix-dictionary/4.4/fields_by_tag.html?utm_source=chatgpt.com "FIX 4.4: Fields by Tag – FIX Dictionary – Onix Solutions"
-
-
-### Session:
-```
-Client App                                Exchange
-    |                                          |
-    | ------------ Logon (35=A) -------------> |
-    |                                          |
-    | <----------- Logon (35=A) -------------- |
-    |                                          |
---- SESSION ESTABLISHED -------------------------------
-
-    | ---- Heartbeat (35=0) every N sec ----> |
-    | <--- Heartbeat (35=0) every N sec ----- |
-
-(Idle period longer than HeartbeatInterval)
-    |
-    | -------- TestRequest (35=1) ----------> |
-    | <---- Heartbeat(35=0, TestReqID) ------ |
-    |
-(If still no response)
-    |
-    | ---- Disconnect / TCP Close ----------> |
-    |                                          |
-    | ------------ Reconnect ----------------> |
-    | ------------ Logon (35=A) -------------> |
-
---- MESSAGE GAP DETECTED -------------------------------
-    |
-    | <----- ResendRequest (35=2, 7,16) ------ |
-    | ----------- Replay missing messages ---> |
-    | ----------- SequenceReset if needed ---> |
-
---- NORMAL TRAFFIC -------------------------------------
-
-    | ---- App Message (35=D,35=G...) -------> |
-    | <--- ExecutionReport (35=8) ------------ |
-
---- GRACEFUL SHUTDOWN -------------------------------
-    |
-    | ---------- Logout (35=5) --------------> |
-    | <--------- Logout (35=5) --------------- |
-    | ----------- TCP Close -----------------> |
-```
-
-### FIX Session Recovery: Resend & GapFill
-
-FIX protocol sessions guarantee ordered, gap-free message delivery between a Client and an Exchange.
-During disconnections, network issues, or message loss, both sides must re-synchronize their incoming sequence numbers using:
-
-- **ResendRequest** (35=2) – request missing messages
-- **SequenceReset** / **GapFill** (35=4, 123=Y) – tell the counterparty to skip a range
-- **Message replay** – re-transmitting actual application messages stored by the engine
-
-This mechanism ensures that both parties eventually reach a consistent message sequence.
-
-## Test Cases
-
-**1) Resend**
-
-Sometimes Exchange can send Resend message, and as for range of seq numbers.
-I simulated it in the code by give command in console. What is awesome that QuickFix handles it automatically (if messages are stored in the file or storage)
-![Alt text](/images/resendFlow.png)
-
-Why we dont see it on the Exchange side? 
-According to FIX documentation - we should not do App Logic after resed, so our FromApp method is not even triggered.
-But they can be seen in Exchange log:
-![Alt text](/images/resendLog.png)
-
-**2) GapFill**
-
