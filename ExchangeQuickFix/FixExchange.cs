@@ -39,8 +39,8 @@ namespace ExchangeQuickFix
                 return;
             }
 
-            int gapFrom = 5;
-            int gapTo = 7;
+            int gapFrom = 3;
+            int gapTo = 5;
 
             Message rr = new Message();
             rr.Header.SetField(new MsgType("2"));

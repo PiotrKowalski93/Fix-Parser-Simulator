@@ -1,5 +1,6 @@
 ﻿using QuickFix;
 using QuickFix.Fields;
+using Utils;
 
 namespace BrokerQuickFix
 {
@@ -32,7 +33,7 @@ namespace BrokerQuickFix
         public void ToAdmin(Message msg, SessionID sessionID)
         {
             var seq = msg.Header.GetInt(Tags.MsgSeqNum);
-            var type = msg.Header.GetString(Tags.MsgType);
+            var type = MessageUtils.ToReadable(msg.Header.GetString(Tags.MsgType));
 
             Console.WriteLine($"[ToAdmin] SeqNum: {seq} | Type: {type}");
         }
@@ -40,7 +41,7 @@ namespace BrokerQuickFix
         public void FromAdmin(Message msg, SessionID sessionID)
         {
             var seq = msg.Header.GetInt(Tags.MsgSeqNum);
-            var type = msg.Header.GetString(Tags.MsgType);
+            var type = MessageUtils.ToReadable(msg.Header.GetString(Tags.MsgType));
 
             if (type == MsgType.RESEND_REQUEST)
             {
@@ -58,7 +59,7 @@ namespace BrokerQuickFix
         public void ToApp(Message msg, SessionID sessionID)
         {
             var seq = msg.Header.GetInt(Tags.MsgSeqNum);
-            var type = msg.Header.GetString(Tags.MsgType);
+            var type = MessageUtils.ToReadable(msg.Header.GetString(Tags.MsgType));
 
             Console.WriteLine($"[ToApp] SeqNum: {seq} | Type: {type}");
         }
@@ -66,7 +67,7 @@ namespace BrokerQuickFix
         public void FromApp(Message msg, SessionID sessionID)
         {
             var seq = msg.Header.GetInt(Tags.MsgSeqNum);
-            var type = msg.Header.GetString(Tags.MsgType);
+            var type = MessageUtils.ToReadable(msg.Header.GetString(Tags.MsgType));
 
             Console.WriteLine($"[FromApp] SeqNum: {seq} | Type: {type}");
         }

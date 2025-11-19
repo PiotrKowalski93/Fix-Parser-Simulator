@@ -1,5 +1,6 @@
 ﻿using QuickFix;
 using QuickFix.Fields;
+using Utils;
 
 namespace ExchangeQuickFix
 {
@@ -24,17 +25,6 @@ namespace ExchangeQuickFix
             Console.WriteLine($"[Exchange] LOGOUT: {sessionID}");
         }
 
-        // -------------- Admin Msg
-        // Logon (35=A)
-        // Logout(35=5)
-        // Messages i.e:
-        // Heartbeat(35=0)
-        // TestRequest(35=1)
-        // ResendRequest(35=2)
-        // SequenceReset(35=4)
-        // Reject(35=3)
-        // BusinessMessageReject(35=j)
-
         // Broker is sending those
         // 1) We can add user and password i.e
         // 2) Add custom tags
@@ -42,7 +32,10 @@ namespace ExchangeQuickFix
         // We can manipulate msg before sending to exchange and right afer reciving, before logic
         public void ToAdmin(Message msg, SessionID sessionID)
         {
-            Console.WriteLine($"[ToAdmin] {msg}");
+            var seq = msg.Header.GetInt(Tags.MsgSeqNum);
+            var type = msg.Header.GetString(Tags.MsgType);
+
+            Console.WriteLine($"[ToAdmin] SeqNum: {seq} | Type: {MessageUtils.ToReadable(type)}");
 
             // Prod Scenario?
             //var msgType = message.Header.GetString(Tags.MsgType);
@@ -63,7 +56,7 @@ namespace ExchangeQuickFix
             var seq = msg.Header.GetInt(Tags.MsgSeqNum);
             var type = msg.Header.GetString(Tags.MsgType);
 
-            Console.WriteLine($"[FromAdmin] SeqNum: {seq} | Type: {type}");
+            Console.WriteLine($"[FromAdmin] SeqNum: {seq} | Type: {MessageUtils.ToReadable(type)}");
 
             //if (msgType == MsgType.LOGOUT)
             //{
@@ -75,24 +68,33 @@ namespace ExchangeQuickFix
             //{
             //    Console.WriteLine("Reject: " + msg.ToString());
             //}
+
+            if (type == MsgType.RESEND_REQUEST)
+            {
+                int begin = msg.GetInt(Tags.BeginSeqNo);
+                int end = msg.GetInt(Tags.EndSeqNo);
+
+                Console.WriteLine($"[EXCHANGE] ResendRequest BeginSeqNum: {begin} | EndSeqNum: {end}");
+                SendGapFill(sessionID, end + 1);
+            }
         }
         // --------------------------------------------
 
         public void ToApp(Message msg, SessionID sessionID)
         {
             var seq = msg.Header.GetInt(Tags.MsgSeqNum);
-            var type = msg.Header.GetString(Tags.MsgType);
+            var type = MessageUtils.ToReadable(msg.Header.GetString(Tags.MsgType));
 
-            Console.WriteLine($"[Exchange -> Client] SeqNum: {seq} | Type: {type}");
+            Console.WriteLine($"[Exchange -> Client] SeqNum: {seq} | Type: {type}+");
         }
 
         public void FromApp(Message msg, SessionID sessionID)
         {
             var seq = msg.Header.GetInt(Tags.MsgSeqNum);
-            var type = msg.Header.GetString(Tags.MsgType);
+            var type = MessageUtils.ToReadable(msg.Header.GetString(Tags.MsgType));
 
             Console.WriteLine($"[Client -> Exchange] SeqNum: {seq} | Type: {type}");
-            //Crack(msg, sessionID);
+            Crack(msg, sessionID);
         }
 
         // ---------------------------------------
@@ -142,6 +144,18 @@ namespace ExchangeQuickFix
             //fill.SetField(new AvgPx(order.Price.getValue()));
 
             //Session.SendToTarget(fill, sessionID);
+        }
+
+        private void SendGapFill(SessionID sessionID, int newSeq)
+        {
+            var seqReset = new QuickFix.FIX44.SequenceReset();
+
+            seqReset.Set(new GapFillFlag(true));  // 123=Y
+            seqReset.Set(new NewSeqNo(newSeq));   // 36 = next seqnum
+
+            Console.WriteLine($"[EXCHANGE] Sending GapFill, NewSeqNo={newSeq}");
+
+            Session.SendToTarget(seqReset, sessionID);
         }
     }
 

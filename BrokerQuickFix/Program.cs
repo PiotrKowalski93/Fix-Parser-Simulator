@@ -37,6 +37,9 @@
                 case "Send NewOrderSingle":
                     _orderService.SendNewOrderSingle("AAPL", 10, 150.25m);
                     return true;
+                case "Send Resend":
+                    _orderService.SendResend(2, 3);
+                    return true;
                 default:
                     return false;
             }

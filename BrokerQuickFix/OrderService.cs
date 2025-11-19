@@ -31,5 +31,13 @@ namespace BrokerQuickFix
             Session.SendToTarget(msg, _sessionId);
             Console.WriteLine("[OrderService] Sent NewOrderSingle");
         }
+
+        public void SendResend(int beginSeqNo, int endSeqNo)
+        {
+            var msg = new ResendRequest(new BeginSeqNo(beginSeqNo), new EndSeqNo(endSeqNo));
+            Session.SendToTarget(msg, _sessionId);
+
+            Console.WriteLine($"[FixClient] Resend message Session: {_sessionId} | BeginSeqNum: {beginSeqNo} | EndSeqNo: {endSeqNo}");
+        }
     }
 }

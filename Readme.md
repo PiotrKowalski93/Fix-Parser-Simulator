@@ -90,7 +90,6 @@ If you like, I can **prepare a ready-to-paste Word/Markdown section** with forma
 [7]: https://www.onixs.biz/fix-dictionary/4.4/fields_by_tag.html?utm_source=chatgpt.com "FIX 4.4: Fields by Tag – FIX Dictionary – Onix Solutions"
 
 
-
 ### Session:
 ```
 Client App                                Exchange
@@ -134,5 +133,29 @@ Client App                                Exchange
     | ----------- TCP Close -----------------> |
 ```
 
+### FIX Session Recovery: Resend & GapFill
 
-### 
+FIX protocol sessions guarantee ordered, gap-free message delivery between a Client and an Exchange.
+During disconnections, network issues, or message loss, both sides must re-synchronize their incoming sequence numbers using:
+
+- **ResendRequest** (35=2) – request missing messages
+- **SequenceReset** / **GapFill** (35=4, 123=Y) – tell the counterparty to skip a range
+- **Message replay** – re-transmitting actual application messages stored by the engine
+
+This mechanism ensures that both parties eventually reach a consistent message sequence.
+
+## Test Cases
+
+**1) Resend**
+
+Sometimes Exchange can send Resend message, and as for range of seq numbers.
+I simulated it in the code by give command in console. What is awesome that QuickFix handles it automatically (if messages are stored in the file or storage)
+![Alt text](/images/resendFlow.png)
+
+Why we dont see it on the Exchange side? 
+According to FIX documentation - we should not do App Logic after resed, so our FromApp method is not even triggered.
+But they can be seen in Exchange log:
+![Alt text](/images/resendLog.png)
+
+**2) GapFill**
+
