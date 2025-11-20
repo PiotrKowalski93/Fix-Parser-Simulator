@@ -105,7 +105,6 @@ namespace ExchangeQuickFix
             var orderId = Guid.NewGuid().ToString();
             var clOrdId = order.GetField(Tags.ClOrdID);
 
-            // STEP 1: Order Acknowledgement (NEW)
             var ack = new QuickFix.FIX44.ExecutionReport(
                 new OrderID(orderId),
                 new ExecID(Guid.NewGuid().ToString()),
@@ -127,11 +126,46 @@ namespace ExchangeQuickFix
 
         public void OnMessage(QuickFix.FIX44.OrderCancelRequest cancelRequest, SessionID sessionID)
         {
-            //TODO: Implement Response
+            var exec = new QuickFix.FIX44.ExecutionReport(
+                new OrderID(Guid.NewGuid().ToString()),   // Echange given ID
+                new ExecID(Guid.NewGuid().ToString()),    // Unique ExecId
+                new ExecType(ExecType.CANCELED),
+                new OrdStatus(OrdStatus.CANCELED),
+                cancelRequest.Symbol,
+                cancelRequest.Side,
+                new LeavesQty(0),
+                new CumQty(0),
+                new AvgPx(0)
+            );
+
+            exec.Set(cancelRequest.ClOrdID);
+            exec.Set(cancelRequest.OrigClOrdID);
+            exec.Set(cancelRequest.Symbol);
+            exec.Set(cancelRequest.OrderQty);
+
+            Session.SendToTarget(exec, sessionID);
         }
         public void OnMessage(QuickFix.FIX44.OrderCancelReplaceRequest replaceRequest, SessionID sessionID)
         {
-            //TODO: Implement Response
+            var exec = new QuickFix.FIX44.ExecutionReport(
+                new OrderID(Guid.NewGuid().ToString()),
+                new ExecID(Guid.NewGuid().ToString()),
+                new ExecType(ExecType.REPLACE),
+                new OrdStatus(OrdStatus.REPLACED),
+                replaceRequest.Symbol,
+                replaceRequest.Side,
+                new LeavesQty(replaceRequest.OrderQty.Obj),
+                new CumQty(0),
+                new AvgPx(0)
+            );
+
+            exec.Set(replaceRequest.ClOrdID);      // New ID
+            exec.Set(replaceRequest.OrigClOrdID);  // Previous ID
+            exec.Set(replaceRequest.Symbol);
+            exec.Set(replaceRequest.OrderQty);
+            exec.Set(replaceRequest.Price);
+
+            Session.SendToTarget(exec, sessionID);
         }
 
         // ---------------------------------------
