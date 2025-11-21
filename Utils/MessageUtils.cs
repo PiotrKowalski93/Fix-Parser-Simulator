@@ -1,8 +1,10 @@
-﻿namespace Utils
+﻿using System.Runtime.InteropServices.JavaScript;
+
+namespace Utils
 {
     public static class MessageUtils
     {
-        private static readonly Dictionary<string, string> Map = new()
+        private static readonly Dictionary<string, string> msgTypeMap = new()
         {
             { "0",  "Heartbeat" },
             { "1",  "TestRequest" },
@@ -30,6 +32,25 @@
             { "j",  "BusinessMessageReject" }
         };
 
+        private static readonly Dictionary<string, string> OrdStatusMap = new()
+        {
+            { "0", "New" },
+            { "1", "Partially Filled" },
+            { "2", "Filled" },
+            { "3", "Done for Day" },
+            { "4", "Canceled" },
+            { "5", "Replaced" },
+            { "6", "Pending Cancel" },
+            { "7", "Stopped" },
+            { "8", "Rejected" },
+            { "9", "Suspended" },
+            { "A", "Pending New" },
+            { "B", "Calculated" },
+            { "C", "Expired" },
+            { "D", "Accepted for Bidding" },
+            { "E", "Pending Replace" }
+        };
+
         //TODO: Add tests
         public static int CalculateChecksum(string msg)
         {
@@ -55,12 +76,20 @@
             return fullMessage + $"10={chcekSum:D3}|";
         }
 
-        public static string ToReadable(string msgType)
+        public static string MsgType(string msgType)
         {
-            if (Map.TryGetValue(msgType, out string? pretty))
+            if (msgTypeMap.TryGetValue(msgType, out string? pretty))
                 return pretty;
 
             return $"Unknown({msgType})";
+        }
+
+        public static string OrdStatus(string ordStatus)
+        {
+            if (OrdStatusMap.TryGetValue(ordStatus, out string? pretty))
+                return pretty;
+
+            return $"Unknown ({ordStatus})";
         }
     }
 }

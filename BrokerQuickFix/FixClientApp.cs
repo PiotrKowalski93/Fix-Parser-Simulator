@@ -33,7 +33,7 @@ namespace BrokerQuickFix
         public void ToAdmin(Message msg, SessionID sessionID)
         {
             var seq = msg.Header.GetInt(Tags.MsgSeqNum);
-            var type = MessageUtils.ToReadable(msg.Header.GetString(Tags.MsgType));
+            var type = MessageUtils.MsgType(msg.Header.GetString(Tags.MsgType));
 
             Console.WriteLine($"[ToAdmin] SeqNum: {seq} | Type: {type}");
         }
@@ -41,7 +41,7 @@ namespace BrokerQuickFix
         public void FromAdmin(Message msg, SessionID sessionID)
         {
             var seq = msg.Header.GetInt(Tags.MsgSeqNum);
-            var type = MessageUtils.ToReadable(msg.Header.GetString(Tags.MsgType));
+            var type = MessageUtils.MsgType(msg.Header.GetString(Tags.MsgType));
 
             if (type == MsgType.RESEND_REQUEST)
             {
@@ -59,17 +59,29 @@ namespace BrokerQuickFix
         public void ToApp(Message msg, SessionID sessionID)
         {
             var seq = msg.Header.GetInt(Tags.MsgSeqNum);
-            var type = MessageUtils.ToReadable(msg.Header.GetString(Tags.MsgType));
+            var type = MessageUtils.MsgType(msg.Header.GetString(Tags.MsgType));
 
             Console.WriteLine($"[ToApp] SeqNum: {seq} | Type: {type}");
         }
 
         public void FromApp(Message msg, SessionID sessionID)
         {
-            var seq = msg.Header.GetInt(Tags.MsgSeqNum);
-            var type = MessageUtils.ToReadable(msg.Header.GetString(Tags.MsgType));
-
-            Console.WriteLine($"[FromApp] SeqNum: {seq} | Type: {type}");
+            Crack(msg, sessionID);
         }
+
+        // ---------------------------------------
+        //       MESSAGE HANDLERS
+        // ---------------------------------------
+
+        public void OnMessage(QuickFix.FIX44.ExecutionReport executionReport, SessionID sessionID)
+        {
+            var seq = executionReport.Header.GetInt(Tags.MsgSeqNum);
+            var type = MessageUtils.MsgType(executionReport.Header.GetString(Tags.MsgType));
+            var ordStatus = MessageUtils.OrdStatus(executionReport.GetString(Tags.OrdStatus));
+
+            Console.WriteLine($"[FromApp] SeqNum: {seq} | Type: {type} | Order Status: {ordStatus}");
+        }
+
+        // ---------------------------------------
     }
 }

@@ -35,7 +35,7 @@ namespace ExchangeQuickFix
             var seq = msg.Header.GetInt(Tags.MsgSeqNum);
             var type = msg.Header.GetString(Tags.MsgType);
 
-            Console.WriteLine($"[ToAdmin] SeqNum: {seq} | Type: {MessageUtils.ToReadable(type)}");
+            Console.WriteLine($"[ToAdmin] SeqNum: {seq} | Type: {MessageUtils.MsgType(type)}");
 
             // Prod Scenario?
             //var msgType = message.Header.GetString(Tags.MsgType);
@@ -56,7 +56,7 @@ namespace ExchangeQuickFix
             var seq = msg.Header.GetInt(Tags.MsgSeqNum);
             var type = msg.Header.GetString(Tags.MsgType);
 
-            Console.WriteLine($"[FromAdmin] SeqNum: {seq} | Type: {MessageUtils.ToReadable(type)}");
+            Console.WriteLine($"[FromAdmin] SeqNum: {seq} | Type: {MessageUtils.MsgType(type)}");
 
             //if (msgType == MsgType.LOGOUT)
             //{
@@ -83,15 +83,15 @@ namespace ExchangeQuickFix
         public void ToApp(Message msg, SessionID sessionID)
         {
             var seq = msg.Header.GetInt(Tags.MsgSeqNum);
-            var type = MessageUtils.ToReadable(msg.Header.GetString(Tags.MsgType));
+            var type = MessageUtils.MsgType(msg.Header.GetString(Tags.MsgType));
 
-            Console.WriteLine($"[Exchange -> Client] SeqNum: {seq} | Type: {type}+");
+            Console.WriteLine($"[Exchange -> Client] SeqNum: {seq} | Type: {type}");
         }
 
         public void FromApp(Message msg, SessionID sessionID)
         {
             var seq = msg.Header.GetInt(Tags.MsgSeqNum);
-            var type = MessageUtils.ToReadable(msg.Header.GetString(Tags.MsgType));
+            var type = MessageUtils.MsgType(msg.Header.GetString(Tags.MsgType));
 
             Console.WriteLine($"[Client -> Exchange] SeqNum: {seq} | Type: {type}");
             Crack(msg, sessionID);
@@ -105,23 +105,69 @@ namespace ExchangeQuickFix
             var orderId = Guid.NewGuid().ToString();
             var clOrdId = order.GetField(Tags.ClOrdID);
 
-            var ack = new QuickFix.FIX44.ExecutionReport(
+            var symbol = order.Symbol.getValue();
+            var side = order.Side.getValue();
+            var qty = order.OrderQty.getValue();
+
+            // 1) PENDING NEW - Exchange got order
+            var pendingNew = new QuickFix.FIX44.ExecutionReport(
                 new OrderID(orderId),
                 new ExecID(Guid.NewGuid().ToString()),
-                new ExecType(ExecType.NEW),
-                new OrdStatus(OrdStatus.NEW),
-                new Symbol(order.Symbol.getValue()),
-                new Side(order.Side.getValue()),
-                new LeavesQty(order.OrderQty.getValue()),
+                new ExecType(ExecType.PENDING_NEW),
+                new OrdStatus(OrdStatus.PENDING_NEW),
+                new Symbol(symbol),
+                new Side(side),
+                new LeavesQty(qty),
                 new CumQty(0),
                 new AvgPx(0)
             );
 
-            ack.SetField(new ClOrdID(clOrdId));
-            ack.SetField(new Symbol(order.Symbol.getValue()));
-            ack.SetField(new AvgPx(0));
+            pendingNew.SetField(new ClOrdID(clOrdId));
 
-            Session.SendToTarget(ack, sessionID);
+            Session.SendToTarget(pendingNew, sessionID);
+
+            // Simulate Exchange latency
+            Thread.Sleep(2000);
+
+            // 2) NEW — Order is Accepted and active
+            var newReport = new QuickFix.FIX44.ExecutionReport(
+                new OrderID(orderId),
+                new ExecID(Guid.NewGuid().ToString()),
+                new ExecType(ExecType.NEW),
+                new OrdStatus(OrdStatus.NEW),
+                new Symbol(symbol),
+                new Side(side),
+                new LeavesQty(qty),
+                new CumQty(0),
+                new AvgPx(0)
+            );
+
+            newReport.SetField(new ClOrdID(clOrdId));
+
+            Session.SendToTarget(newReport, sessionID);
+
+            Thread.Sleep(2000);
+
+            // 3) FILLED — Full order is filled
+            decimal filledPrice = 100.25m; // Sample price
+
+            var filled = new QuickFix.FIX44.ExecutionReport(
+                new OrderID(orderId),
+                new ExecID(Guid.NewGuid().ToString()),
+                new ExecType(ExecType.FILL),
+                new OrdStatus(OrdStatus.FILLED),
+                new Symbol(symbol),
+                new Side(side),
+                new LeavesQty(0),    // Nothing left
+                new CumQty(qty),     // All consumed
+                new AvgPx(filledPrice)
+            );
+
+            filled.SetField(new ClOrdID(clOrdId));
+            filled.SetField(new LastPx(filledPrice));
+            filled.SetField(new LastQty(qty)); // Last volume 0- all
+
+            Session.SendToTarget(filled, sessionID);
         }
 
         public void OnMessage(QuickFix.FIX44.OrderCancelRequest cancelRequest, SessionID sessionID)
