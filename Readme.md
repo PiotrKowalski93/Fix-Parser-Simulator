@@ -33,7 +33,7 @@
 **Common libraries / SDKs**
 
 * For .NET (C#) you can use QuickFIX/n: e.g., NuGet package `QuickFIXn.FIX4.4` which contains message definitions for FIX 4.4.
-* Commercial / ultra low latency engines: e.g., OnixS FIX Engine SDK in .NET / C++ / Java for high-performance trading.
+* Commercial / ultra low latency engines: e.g., OnixS FIX Engine SDK in C++ for high-performance trading.
 * For Java: QuickFIX/J supports FIX versions including 4.4.
 * These libraries save you from implementing the session layer, message parsing/serialization, dictionary management and basic recovery logic.
 
