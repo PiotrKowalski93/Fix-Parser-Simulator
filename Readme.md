@@ -1,5 +1,6 @@
 [Session Flow](/docs/sessionFlow.md)
 [Order Flow](/docs/orderFlow.md)
+[Cancel Order Flow](/docs/cancelOrderFlow.md)
 [Test Cases](/docs/testCases.md)
 
 ### Summary of the FIX 4.4 Protocol – What it is & Why use it
