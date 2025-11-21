@@ -4,6 +4,8 @@
 - [Replace Order Flow](/docs/replaceOrdereFlow.md)
 - [Test Cases](/docs/testCases.md)
 
+![Alt text](/images/arch.png)
+
 ### Summary of the FIX 4.4 Protocol – What it is & Why use it
 
 **Purpose / Use-case**
